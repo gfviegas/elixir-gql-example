@@ -1,0 +1,44 @@
+version: "3.7"
+
+networks:
+  fullcommerce-my_app:
+    driver: bridge
+
+services:
+  psql:
+    image: postgres:12
+    container_name: my_app-psql
+    ports:
+      - 5432:5432
+    networks:
+      - fullcommerce-my_app
+    environment:
+      - POSTGRES_DB=my_app-dev
+      - POSTGRES_USER=my_app
+      - POSTGRES_PASSWORD=my_app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  my_app:
+    image: fullcommerce-my_app:latest
+    container_name: fullcommerce-my_app
+    build:
+      context: ./my_app
+    working_dir: /code
+    command: bash -c 'mix deps.get && mix phx.server'
+    networks:
+      - fullcommerce-my_app
+    ports:
+      - 4000:4000
+      - 4001:4001
+    volumes:
+      - ./my_app:/code
+      - /code/deps
+      - /code/_build
+      - /code/.elixir_ls
+    depends_on:
+      - psql
+    env_file: .env
+
+volumes:
+    pgdata:
